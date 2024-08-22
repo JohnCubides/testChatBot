@@ -346,3 +346,4 @@ healthchecksdb
 # Sonarqube analysis
 .scannerwork
 
+**/[Dd]ebug/
