@@ -17,25 +17,13 @@ namespace WhatsappNet.Api.Controllers
         }
 
         [HttpGet("test")]
-        public async Task<ActionResult> Sample()
+        public IActionResult Sample()
         {
-            var data = new
-            {
-                messaging_product = "whatsapp",
-                to = "573138617927",
-                type = "text",
-                text = new
-                {
-                    body = " Este es un mensaje de prueba "
-                }
-
-            };
-
-
-
-
-            var result = await _whatsappCloudSendMessage.Execute(data);
-            return Ok("Ok sample");
+            int numeroUno = 1;
+            int numerodos = 2;
+            int resultado;
+            resultado = numeroUno + numerodos;
+            return Ok(resultado);
         }
 
         [HttpGet]
