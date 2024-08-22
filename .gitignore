@@ -339,10 +339,7 @@ ASALocalRun/
 # Local History for Visual Studio Code
 .history/
 
-# BeatPulse healthcheck temp database
-healthchecksdb
-/Integracion.Odoo.Api/.config/dotnet-tools.json
-
 # Sonarqube analysis
 .scannerwork
 
+**/obj/
