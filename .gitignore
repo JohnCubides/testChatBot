@@ -347,3 +347,4 @@ healthchecksdb
 .scannerwork
 
 **/[Dd]ebug/
+**/[Oo]bj/
