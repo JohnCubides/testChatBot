@@ -23,6 +23,9 @@ namespace WhatsappNet.Api.Services
 
                 var response = await client.PostAsync(uri, content);
 
+                Task<string> contenido = response.Content.ReadAsStringAsync();
+                String result = contenido.Result;
+
                 if (response.IsSuccessStatusCode) {
                     return true;
                 }

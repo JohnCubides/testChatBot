@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using WhatsappNet.Api.Models;
 using WhatsappNet.Api.Services;
 using WhatsappNet.Api.Util;
@@ -21,12 +22,12 @@ namespace WhatsappNet.Api.Controllers
         }
 
         [HttpGet("test")]
-        public async Task<ActionResult> Sample()
+        public async Task<ActionResult> Sample(string number)
         {
             var data = new
             {
                 messaging_product = "whatsapp",
-                to = "573138617927",
+                to = $"57{number}",
                 type = "text",
                 text = new
                 {
@@ -56,10 +57,10 @@ namespace WhatsappNet.Api.Controllers
         //    }
         // }
 
-        public IActionResult Webhook([FromQuery] string hub_mode, [FromQuery] string hub_challenge, [FromQuery] string hub_verify_token)
+        public IActionResult Webhook([FromQuery(Name = "hub.mode")] string hub_mode, [FromQuery(Name = "hub.challenge")] string hub_challenge, [FromQuery(Name = "hub.verify_token")] string hub_verify_token)
         {
             // Tu Verify Token configurado
-            const string verifyToken = "JSADJASDJJASDJAS";
+            const string verifyToken = "EAF5OwUZABAzUBO3kuck5rJWhRjFOfAGIZAXdnAvs7uSeC2OmOaZC5rEj9SIZBLol5z0ZBN3QEt04hwxZCJOHVNHR93Hov0vRIwxZAH8NzhBbzHkq4f5whHpmReZCntFKZB2e048Qh7gxbsoNzrBnCcOwnWXZCEAL5xpqZCy35TqlDs6cB8sbTimPzruStBYhSjVeSEFepp6do8WfYUOZAX0o893bttbr3VXU8DipwXgsePkZD";
 
             if (hub_mode == "subscribe" && hub_verify_token == verifyToken)
             {
