@@ -1,5 +1,7 @@
-﻿using OpenAI_API;
-using OpenAI_API.Completions;
+﻿using Newtonsoft.Json;
+using OpenAI_API;
+using OpenAI_API.Chat;
+using WhatsappNet.Api.Models;
 
 namespace WhatsappNet.Api.Services.ChatGPT
 {
@@ -9,21 +11,24 @@ namespace WhatsappNet.Api.Services.ChatGPT
         {
             try
             {
-                string apiKey = "";
-                var openAiService = new OpenAIAPI(apiKey);
+                string map = "";
+                var openAiService = new OpenAIAPI(map);
 
-                var completion = new CompletionRequest
+                var chatRequest = new ChatRequest
                 {
-                    Prompt = textUser,
-                    Model = "gpt-3.5-turbo",
-                    NumChoicesPerPrompt = 1,
-                    MaxTokens = 100
+                    Model = "gpt-4o",
+                    Messages = new List<ChatMessage>
+                    {
+                         new ChatMessage(ChatMessageRole.System, "Gracias"),
+                        new ChatMessage(ChatMessageRole.User, textUser)
+                    },
+                    MaxTokens = 200
                 };
 
-                var result = await openAiService.Completions.CreateCompletionAsync(completion);
+                var chatResult = await openAiService.Chat.CreateChatCompletionAsync(chatRequest);
 
-                if (result != null && result.Completions.Count > 0)
-                    return result.Completions[0].Text;
+                if (chatResult != null && chatResult.Choices.Count > 0)
+                    return chatResult.Choices[0].Message.Content;
 
                 return "Lo siento, sucedio un problema, intentalo mas tarde.";
             }

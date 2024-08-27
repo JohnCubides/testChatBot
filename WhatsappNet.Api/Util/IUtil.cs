@@ -9,5 +9,6 @@
         object DocumentMessage(string url, string number);
         object LocationMessage(string number);
         object ButtonsMessage(string number);
+        object BodyGemini(string text);
     }
 }

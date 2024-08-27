@@ -1,4 +1,7 @@
-﻿namespace WhatsappNet.Api.Util
+﻿using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+
+namespace WhatsappNet.Api.Util
 {
     public class Util : IUtil
     {
@@ -136,5 +139,26 @@
             };
 
         }
+        public object BodyGemini(string text)
+        {
+            return new
+            {
+                contents = new List<object>
+                {
+                    new
+                    {
+                        role = "user",
+                        parts = new List<object>
+                        {
+                            new
+                            {
+                                text = text
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
     }
 }

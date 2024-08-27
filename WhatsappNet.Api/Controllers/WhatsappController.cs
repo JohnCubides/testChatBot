@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using WhatsappNet.Api.Models;
 using WhatsappNet.Api.Services;
 using WhatsappNet.Api.Services.ChatGPT;
+using WhatsappNet.Api.Services.Gemini;
 using WhatsappNet.Api.Util;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -16,12 +17,22 @@ namespace WhatsappNet.Api.Controllers
         private readonly IWhatsappCloudSendMessage _whatsappCloudSendMessage;
         private readonly IUtil _util;
         private readonly IChatGPTService _chatGPTService;
+        private readonly IGeminiAPI _geminiAPI;
 
-        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util, IChatGPTService chatGPTService)
+        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util, IChatGPTService chatGPTService, IGeminiAPI geminiAPI)
         {
             _whatsappCloudSendMessage = whatsappCloudSendMessage;
             _util = util;
             _chatGPTService = chatGPTService;
+            _geminiAPI = geminiAPI;
+        }
+
+        [HttpPost("Gemini")]
+        public async Task<ActionResult> Gemini([FromBodyAttribute] string text)
+        {
+            object objectMessage = _util.BodyGemini(text);
+            string responseGemini = await _geminiAPI.Execute(objectMessage); 
+            return Ok(responseGemini);
         }
 
         [HttpGet("test")]
@@ -78,7 +89,8 @@ namespace WhatsappNet.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ReceivedMessage( [FromBody] WhatsAppCloudModel body ) {
+        public async Task<IActionResult> ReceivedMessage( [FromBody] WhatsAppCloudModel body ) 
+        {
             try 
             {
                 Message Message = body.Entry[0].Changes[0].Value.Messages[0];
@@ -119,10 +131,10 @@ namespace WhatsappNet.Api.Controllers
                 #endregion
 
                 #region con chatgpt
-                var responseChatGPT = await _chatGPTService.Execute(userText);
-                var objectMessage = _util.TextMessage(responseChatGPT, userNumber);
+                //var responseChatGPT = await _chatGPTService.Execute(userText);
+                //var objectMessage = _util.TextMessage(responseChatGPT, userNumber);
 
-                listObjectMessage.Add(objectMessage);
+                //listObjectMessage.Add(objectMessage);
 
                 #endregion
 
