@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using WhatsappNet.Api.Models;
 using WhatsappNet.Api.Services;
+using WhatsappNet.Api.Services.ChatGPT;
 using WhatsappNet.Api.Util;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -14,11 +15,13 @@ namespace WhatsappNet.Api.Controllers
 
         private readonly IWhatsappCloudSendMessage _whatsappCloudSendMessage;
         private readonly IUtil _util;
+        private readonly IChatGPTService _chatGPTService;
 
-        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util)
+        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util, IChatGPTService chatGPTService)
         {
             _whatsappCloudSendMessage = whatsappCloudSendMessage;
             _util = util;
+            _chatGPTService = chatGPTService;
         }
 
         [HttpGet("test")]
@@ -82,45 +85,53 @@ namespace WhatsappNet.Api.Controllers
                 string userNumber = Message.From;
                 string userText = GetUserText( Message );
 
-                object objectMessage;
+                List <object> listObjectMessage = new List <object> ();
 
-                switch (userText.ToUpper())
+                #region sin chatgpt
+
+                //if (userText.ToUpper().Contains("HOLA"))
+                //{
+                //    var objectMessage = _util.TextMessage("Hola, ¿como te puedo ayudar? 😃", userNumber);
+                //    listObjectMessage.Add(objectMessage);
+
+                //    var objectMessage2 = _util.TextMessage("Respondere todas tus preguntas 😃", userNumber);
+                //    listObjectMessage.Add(objectMessage2);
+
+                //    var objectMessage3 = _util.ImageMessage("https://media.revistagq.com/photos/5ca5f6a77a3aec0df5496c59/4:3/w_1960,h_1470,c_limit/bob_esponja_9564.png", userNumber);
+                //    listObjectMessage.Add(objectMessage3);
+                //}
+                //else if (userText.ToUpper().Contains("GRACIAS") || userText.ToUpper().Contains("AGRADECID"))
+                //{
+                //    var objectMessage = _util.TextMessage("Gracias a ti por escribirme. 😃", userNumber);
+                //    listObjectMessage.Add(objectMessage);
+                //}
+                //else if (userText.ToUpper().Contains("ADIOS") || userText.ToUpper().Contains("YA ME VOY"))
+                //{
+                //    var objectMessage = _util.TextMessage("Adios, Dios te bendiga. 😃", userNumber);
+                //    listObjectMessage.Add(objectMessage);
+                //}
+                //else
+                //{
+                //    var objectMessage = _util.TextMessage("Lo siento, no puedo entenderte. 😔", userNumber);
+                //    listObjectMessage.Add(objectMessage);
+                //}
+
+                #endregion
+
+                #region con chatgpt
+                var responseChatGPT = await _chatGPTService.Execute(userText);
+                var objectMessage = _util.TextMessage(responseChatGPT, userNumber);
+
+                listObjectMessage.Add(objectMessage);
+
+                #endregion
+
+                foreach (var item in listObjectMessage)
                 {
-                    case "TEXT":
-                        objectMessage = _util.TextMessage("Este es un ejemplo de texto", userNumber);
-                        break;
-
-                    case "IMAGE":
-                        objectMessage = _util.ImageMessage("https://media.revistagq.com/photos/5ca5f6a77a3aec0df5496c59/4:3/w_1960,h_1470,c_limit/bob_esponja_9564.png", userNumber);
-                        break;
-
-                    case "AUDIO":
-                        objectMessage = _util.AudioMessage("https://biostoragecloud.blob.core.windows.net/resource-udemy-whatsapp-node/audio_whatsapp.mp3", userNumber);
-                        break;
-
-                    case "VIDEO":
-                        objectMessage = _util.VideoMessage("https://biostoragecloud.blob.core.windows.net/resource-udemy-whatsapp-node/video_whatsapp.mp4", userNumber);
-                        break;
-
-                    case "DOCUMENT":
-                        objectMessage = _util.DocumentMessage("https://biostoragecloud.blob.core.windows.net/resource-udemy-whatsapp-node/document_whatsapp.pdf", userNumber);
-                        break;
-
-                    case "LOCATION":
-                        objectMessage = _util.LocationMessage(userNumber);
-                        break;
-
-                    case "BUTTON":
-                        objectMessage = _util.ButtonsMessage(userNumber);
-                        break;
-
-                    default:
-                        objectMessage = _util.TextMessage("Lo siento, no pude entenderte", userNumber);
-                        break;
+                    await _whatsappCloudSendMessage.Execute(item);
                 }
 
-
-                await _whatsappCloudSendMessage.Execute(objectMessage);
+                
                 return Ok("EVENT_RECEIVED");
             } 
             catch (Exception ex) 
