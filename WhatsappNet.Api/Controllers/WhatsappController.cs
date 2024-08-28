@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using WhatsappNet.Api.Class;
 using WhatsappNet.Api.Models;
 using WhatsappNet.Api.Services;
 using WhatsappNet.Api.Services.ChatGPT;
 using WhatsappNet.Api.Services.Gemini;
 using WhatsappNet.Api.Util;
+using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WhatsappNet.Api.Controllers
@@ -96,8 +98,44 @@ namespace WhatsappNet.Api.Controllers
                 Message Message = body.Entry[0].Changes[0].Value.Messages[0];
                 string userNumber = Message.From;
                 string userText = GetUserText( Message );
+                object objectMessage = new { };
+                List<object> listObjectMessage = new List<object>();
+                bool createMessage = false;
 
-                List <object> listObjectMessage = new List <object> ();
+                if ( (userText.ToUpper() == "HOLA" || userText.Length <= 4) && !int.TryParse(userText, out int result)) {
+                    objectMessage = _util.TextMessage("Hola, Con que IA quieres hacer tu consulta:1-ChatGTP, 2-Gemini", userNumber);
+                    createMessage = true;
+                }
+
+                if (userText.Length == 1 && int.TryParse(userText, out int number)) {
+                    DataStore.Datos["id"] = number;
+                    objectMessage = _util.TextMessage($"´Qué deseas consultarle hoy a {FontIA[number]}?", userNumber);
+                    createMessage = true;
+                }
+
+                if (CountWords(userText) > 2 && !createMessage)
+                {
+                    if (DataStore.Datos.TryGetValue("id", out int value))
+                    {
+                        if (value == 1) {
+                            string responseChatGPT = await _chatGPTService.Execute(userText);
+                            objectMessage = _util.TextMessage(responseChatGPT, userNumber);
+                        }
+                        if (value == 2) {
+                            object objectMessageGemini = _util.BodyGemini(userText);
+                            string responseGemini = await _geminiAPI.Execute(objectMessageGemini);
+                            objectMessage = _util.TextMessage(responseGemini, userNumber);
+                        }
+                    }
+                    else
+                    {
+                        objectMessage = _util.TextMessage("No se ha definido ninguna IA", userNumber);
+                    }
+                }
+                else if(!createMessage)
+                {
+                    objectMessage = _util.TextMessage("Recuerda que la pregunta debe contener mas de 3 palabras", userNumber);
+                }
 
                 #region sin chatgpt
 
@@ -137,7 +175,7 @@ namespace WhatsappNet.Api.Controllers
                 //listObjectMessage.Add(objectMessage);
 
                 #endregion
-
+                listObjectMessage.Add(objectMessage);
                 foreach (var item in listObjectMessage)
                 {
                     await _whatsappCloudSendMessage.Execute(item);
@@ -179,5 +217,23 @@ namespace WhatsappNet.Api.Controllers
 
             return finalMessage;
         } 
+
+        private int CountWords(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return 0;
+            }
+
+            // Usa el método Split para dividir el texto en palabras, eliminando espacios adicionales
+            string[] palabras = text.Split(new char[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            return palabras.Length;
+        }
+
+        private readonly Dictionary<int, string> FontIA = new Dictionary<int, string>
+        {
+            {1,"ChatGTP" },
+            {2, "GeminiIA" }
+        };
     }
 }

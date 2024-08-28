@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace WhatsappNet.Api.Services.Gemini
 {
@@ -8,7 +9,7 @@ namespace WhatsappNet.Api.Services.Gemini
     {
         public async Task<string> Execute(object model)
         {
-            Task<string> result = Task.FromResult(string.Empty);
+            string result = string.Empty;
             HttpClient client = new HttpClient();
             Byte[] byteData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(model));
 
@@ -21,10 +22,15 @@ namespace WhatsappNet.Api.Services.Gemini
                 string uri = $"{domain}/{path}?{queryParams}";
 
                 var response = await client.PostAsync(uri, content);
-                result = response.Content.ReadAsStringAsync();
+                //result = response.Content.ReadAsStringAsync();
+
+                
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+                JObject jsonObject = JsonConvert.DeserializeObject< JObject>(jsonResponse);
+                result = jsonObject["candidates"][0]["content"]["parts"][0]["text"].ToString();
                 
             }
-            return await result;
+            return result;
         }
     }
 }
