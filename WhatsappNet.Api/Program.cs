@@ -1,4 +1,7 @@
 using WhatsappNet.Api.Services;
+using WhatsappNet.Api.Services.ChatGPT;
+using WhatsappNet.Api.Services.Gemini;
+using WhatsappNet.Api.Util;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +14,10 @@ builder.Services.AddSwaggerGen();
 
 //add services
 builder.Services.AddSingleton<IWhatsappCloudSendMessage, WhatsappCloudSendMessage>();
+builder.Services.AddSingleton<IUtil,Util>();
+builder.Services.AddSingleton<IChatGPTService, ChatGPTService>();
+builder.Services.AddSingleton<IGeminiAPI, GeminiAPI>();
+
 
 var app = builder.Build();
 
