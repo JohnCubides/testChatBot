@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using WhatsappNet.Api.Class;
 using WhatsappNet.Api.Models;
+using WhatsappNet.Api.Models.prueba;
 using WhatsappNet.Api.Services;
 using WhatsappNet.Api.Services.ChatGPT;
 using WhatsappNet.Api.Services.Gemini;
@@ -20,14 +21,31 @@ namespace WhatsappNet.Api.Controllers
         private readonly IUtil _util;
         private readonly IChatGPTService _chatGPTService;
         private readonly IGeminiAPI _geminiAPI;
+        private readonly AppDbContext _context;
 
-        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util, IChatGPTService chatGPTService, IGeminiAPI geminiAPI)
+        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util, IChatGPTService chatGPTService, IGeminiAPI geminiAPI, AppDbContext context)
         {
             _whatsappCloudSendMessage = whatsappCloudSendMessage;
             _util = util;
             _chatGPTService = chatGPTService;
             _geminiAPI = geminiAPI;
+            _context = context;
         }
+
+        //[HttpGet]
+        //public IActionResult Get()
+        //{
+        //    try
+        //    {
+        //        var registros = _context.Clientes.ToList(); // Obtén todos los registros
+        //        return Ok(registros);
+        //    }
+
+        //    catch (Exception ex) 
+        //    {
+        //        return StatusCode(500, $"Error: {ex.Message}");
+        //    }
+        //}
 
         [HttpPost("Gemini")]
         public async Task<ActionResult> Gemini([FromBodyAttribute] string text)
@@ -101,6 +119,14 @@ namespace WhatsappNet.Api.Controllers
                 object objectMessage = new { };
                 List<object> listObjectMessage = new List<object>();
                 bool createMessage = false;
+
+                MessageModel messageModel = new MessageModel();
+                //messageModel.Message = userText;
+                //messageModel.TypeMessage = Message.Type;
+                //messageModel.UserId = 1;
+
+                _context.Messages.Add(messageModel);
+                _context.SaveChanges();
 
                 if ( (userText.ToUpper() == "HOLA" || userText.Length <= 4) && !int.TryParse(userText, out int result)) {
                     objectMessage = _util.TextMessage("Hola, Con que IA quieres hacer tu consulta:1-ChatGTP, 2-Gemini", userNumber);

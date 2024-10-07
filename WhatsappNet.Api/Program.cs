@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using WhatsappNet.Api.Class;
 using WhatsappNet.Api.Services;
 using WhatsappNet.Api.Services.ChatGPT;
 using WhatsappNet.Api.Services.Gemini;
@@ -17,6 +19,11 @@ builder.Services.AddSingleton<IWhatsappCloudSendMessage, WhatsappCloudSendMessag
 builder.Services.AddSingleton<IUtil,Util>();
 builder.Services.AddSingleton<IChatGPTService, ChatGPTService>();
 builder.Services.AddSingleton<IGeminiAPI, GeminiAPI>();
+
+// Configura la cadena de conexi?n para el DbContext
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 
 var app = builder.Build();
