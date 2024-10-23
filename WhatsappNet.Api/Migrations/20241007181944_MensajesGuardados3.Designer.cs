@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WhatsappNet.Api.Class;
@@ -11,9 +12,11 @@ using WhatsappNet.Api.Class;
 namespace WhatsappNet.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241007181944_MensajesGuardados3")]
+    partial class MensajesGuardados3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,21 +33,23 @@ namespace WhatsappNet.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
+                    b.Property<int>("MessagesModelId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("StatusesModelId")
                         .HasColumnType("integer");
 
                     b.Property<int>("ValueModelId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("profile_name")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("user_id")
+                    b.Property<int>("profile_name")
                         .HasColumnType("integer");
 
-                    b.Property<string>("wa_id")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("user_id")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("wa_id")
+                        .HasColumnType("integer");
 
                     b.HasKey("id");
 
@@ -287,7 +292,8 @@ namespace WhatsappNet.Api.Migrations
 
                     b.HasKey("id");
 
-                    b.HasIndex("ContactsModelId");
+                    b.HasIndex("ContactsModelId")
+                        .IsUnique();
 
                     b.HasIndex("StatusesModelId")
                         .IsUnique();
@@ -299,11 +305,11 @@ namespace WhatsappNet.Api.Migrations
 
             modelBuilder.Entity("WhatsappNet.Api.Models.StatusesModel", b =>
                 {
-                    b.Property<int?>("id")
+                    b.Property<int>("id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int?>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<int>("ContactsModelId")
                         .HasColumnType("integer");
@@ -315,57 +321,73 @@ namespace WhatsappNet.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("biz_opaque_callback_data")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("conversation_id")
+                    b.Property<int>("conversation_id")
                         .HasColumnType("integer");
 
                     b.Property<string>("conversation_origin_authentication")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("conversation_origin_expiration_timestamp")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("conversation_origin_marketing")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("conversation_origin_referral_conversion")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("conversation_origin_service")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("conversation_origin_type")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("conversation_origin_utility")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("meta_id")
+                    b.Property<int>("meta_id")
                         .HasColumnType("integer");
 
                     b.Property<string>("pricing_authentication")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("pricing_authentication_international")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("pricing_category")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("pricing_marketing")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("pricing_pricing_model")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("pricing_referral_conversion")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("pricing_service")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("pricing_utility")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("id");
@@ -377,28 +399,31 @@ namespace WhatsappNet.Api.Migrations
 
             modelBuilder.Entity("WhatsappNet.Api.Models.ValueModel", b =>
                 {
-                    b.Property<int?>("id")
+                    b.Property<int>("id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int?>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
-                    b.Property<int?>("contact_id")
+                    b.Property<int>("contact_id")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("message_id")
+                    b.Property<int>("message_id")
                         .HasColumnType("integer");
 
                     b.Property<string>("messaging_product")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("metadata_display_phone_number")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("metadata_phone_number_id")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("statuses_id")
+                    b.Property<int>("statuses_id")
                         .HasColumnType("integer");
 
                     b.HasKey("id");
@@ -428,8 +453,8 @@ namespace WhatsappNet.Api.Migrations
             modelBuilder.Entity("WhatsappNet.Api.Models.MessageModel", b =>
                 {
                     b.HasOne("WhatsappNet.Api.Models.ContactsModel", "Contacts")
-                        .WithMany("Messages")
-                        .HasForeignKey("ContactsModelId")
+                        .WithOne("Message")
+                        .HasForeignKey("WhatsappNet.Api.Models.MessageModel", "ContactsModelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -465,7 +490,8 @@ namespace WhatsappNet.Api.Migrations
 
             modelBuilder.Entity("WhatsappNet.Api.Models.ContactsModel", b =>
                 {
-                    b.Navigation("Messages");
+                    b.Navigation("Message")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WhatsappNet.Api.Models.StatusesModel", b =>

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WhatsappNet.Api.Class;
@@ -11,9 +12,11 @@ using WhatsappNet.Api.Class;
 namespace WhatsappNet.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241008120441_ErrorDuplicado2")]
+    partial class ErrorDuplicado2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,9 +45,8 @@ namespace WhatsappNet.Api.Migrations
                     b.Property<int?>("user_id")
                         .HasColumnType("integer");
 
-                    b.Property<string>("wa_id")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int?>("wa_id")
+                        .HasColumnType("integer");
 
                     b.HasKey("id");
 

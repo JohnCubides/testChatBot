@@ -1,8 +1,11 @@
+using Google.Api;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using WhatsappNet.Api.Class;
 using WhatsappNet.Api.Services;
 using WhatsappNet.Api.Services.ChatGPT;
 using WhatsappNet.Api.Services.Gemini;
+using WhatsappNet.Api.Services.NotionS;
 using WhatsappNet.Api.Util;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +22,16 @@ builder.Services.AddSingleton<IWhatsappCloudSendMessage, WhatsappCloudSendMessag
 builder.Services.AddSingleton<IUtil,Util>();
 builder.Services.AddSingleton<IChatGPTService, ChatGPTService>();
 builder.Services.AddSingleton<IGeminiAPI, GeminiAPI>();
+builder.Services.AddSingleton<AgendarCita>();
+
+
+builder.Services.Configure<Notion>(builder.Configuration.GetSection("NotionConfig"));
+
+builder.Services.AddScoped<Notion>(sp =>
+{
+    var config = sp.GetRequiredService<IOptions<NotionConfig>>().Value;
+    return new Notion(config.notionApiKey, config.DatabaseId);
+});
 
 // Configura la cadena de conexi?n para el DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>

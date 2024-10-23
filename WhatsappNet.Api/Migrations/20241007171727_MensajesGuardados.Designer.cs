@@ -11,8 +11,8 @@ using WhatsappNet.Api.Class;
 namespace WhatsappNet.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241003201839_PruebaModelos")]
-    partial class PruebaModelos
+    [Migration("20241007171727_MensajesGuardados")]
+    partial class MensajesGuardados
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

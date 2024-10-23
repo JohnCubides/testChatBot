@@ -6,9 +6,12 @@ using WhatsappNet.Api.Models.prueba;
 using WhatsappNet.Api.Services;
 using WhatsappNet.Api.Services.ChatGPT;
 using WhatsappNet.Api.Services.Gemini;
+using WhatsappNet.Api.Services.NotionS;
 using WhatsappNet.Api.Util;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using static WhatsappNet.Api.Class.AgendarCita;
+using static WhatsappNet.Api.Models.WhatsAppCloudModel;
 
 namespace WhatsappNet.Api.Controllers
 {
@@ -22,14 +25,18 @@ namespace WhatsappNet.Api.Controllers
         private readonly IChatGPTService _chatGPTService;
         private readonly IGeminiAPI _geminiAPI;
         private readonly AppDbContext _context;
+        private readonly Notion _notion;
+        private readonly AgendarCita _agendarCita;
 
-        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util, IChatGPTService chatGPTService, IGeminiAPI geminiAPI, AppDbContext context)
+        public WhatsappController(IWhatsappCloudSendMessage whatsappCloudSendMessage, IUtil util, IChatGPTService chatGPTService, IGeminiAPI geminiAPI, AppDbContext context, Notion notion, AgendarCita agendarCita)
         {
             _whatsappCloudSendMessage = whatsappCloudSendMessage;
             _util = util;
             _chatGPTService = chatGPTService;
             _geminiAPI = geminiAPI;
             _context = context;
+            _notion = notion;
+            _agendarCita = agendarCita;
         }
 
         //[HttpGet]
@@ -46,6 +53,20 @@ namespace WhatsappNet.Api.Controllers
         //        return StatusCode(500, $"Error: {ex.Message}");
         //    }
         //}
+        [HttpPost("Citas")]
+        public async Task<IActionResult> CrearCitaAsync(AgendarCita nuevaCita)
+        {
+            await _notion.CrearCitaAsync(nuevaCita);
+
+            return Ok("Cita creada exitosamente.");
+        }
+
+        [HttpGet("agendadas")]
+        public async Task<IActionResult> ObtenerCitasAgendadas()
+        {
+            var citasAgendadas = await _notion.ObtenerCitasAgendadas();
+            return Ok(citasAgendadas);
+        }
 
         [HttpPost("Gemini")]
         public async Task<ActionResult> Gemini([FromBodyAttribute] string text)
@@ -114,19 +135,88 @@ namespace WhatsappNet.Api.Controllers
             try 
             {
                 Message Message = body.Entry[0].Changes[0].Value.Messages[0];
+                Contacts Contact = body.Entry[0].Changes[0].Value.Contacts[0];
+                
+                string waId = Contact.Wa_id;
+                string userName = Contact.Profile.Name;
                 string userNumber = Message.From;
                 string userText = GetUserText( Message );
+                string timestamp = Message.Timestamp;
                 object objectMessage = new { };
                 List<object> listObjectMessage = new List<object>();
                 bool createMessage = false;
 
+                ContactsModel contactsModel = new ContactsModel();
+                contactsModel.wa_id = waId;
+                contactsModel.profile_name = userName;
+                
+                
+
+                // Verifica si el contacto ya existe en la base de datos
+                var existingContact = _context.Contacts.FirstOrDefault(c => c.wa_id == waId);
+                if (existingContact == null)
+                {
+                    // Si el contacto no existe, lo agregamos
+                    ContactsModel contact = new ContactsModel();
+                    {
+                        contact.wa_id = waId;
+                        contact.profile_name = userName;// Guardamos el nombre del perfil
+                    };
+
+                    _context.Contacts.Add(contact);
+                    await _context.SaveChangesAsync();
+                }
+
                 MessageModel messageModel = new MessageModel();
-                //messageModel.Message = userText;
-                //messageModel.TypeMessage = Message.Type;
-                //messageModel.UserId = 1;
+                messageModel.text_body = userText;
+                messageModel.type = Message.Type;
+                messageModel.from = userNumber;
+                messageModel.timestamp = timestamp;
 
                 _context.Messages.Add(messageModel);
                 _context.SaveChanges();
+
+                if (userText.ToUpper() == "AGENDAR CITA")
+                {
+                    // Crear objeto AgendarCita con el nombre del usuario
+
+                    AgendarCita cita = new AgendarCita
+                    {
+                        Parent = new AgendarCita.Parents { Database_id = "10405bf806c0807e8d73d439b57cf01e" },
+                        Properties = new AgendarCita.Propertie
+                        {
+                            Nombre = new AgendarCita.Nombre
+                            {
+                                Title = new List<AgendarCita.Titles>
+                                {
+                                    new AgendarCita.Titles
+                                    {
+                                        Text = new AgendarCita.Texts
+                                        {
+                                            Content = userName // Usar el nombre del usuario
+                                        }
+                                    }
+                                }
+                            },
+                            Horario = new AgendarCita.Horarios
+                            {
+                                Date = new AgendarCita.Dates
+                                {
+                                    Start = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ") // Fecha de la cita (1 hora más)
+                                }
+                            }
+                        }
+                    };
+
+                    try
+                    {
+                        await _notion.CrearCitaAsync(cita);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error al crear la cita: {ex.Message}");
+                    }
+                }
 
                 if ( (userText.ToUpper() == "HOLA" || userText.Length <= 4) && !int.TryParse(userText, out int result)) {
                     objectMessage = _util.TextMessage("Hola, Con que IA quieres hacer tu consulta:1-ChatGTP, 2-Gemini", userNumber);
@@ -228,16 +318,16 @@ namespace WhatsappNet.Api.Controllers
 
             if (typeMessage.ToUpper() == "INTERACTIVE")
             {
-                string interactiveType = message.Interactive.Type;
+                //string interactiveType = message.Interactive.Type.List_reply;
 
-                if (interactiveType.ToUpper() == "LIST_REPLY")
+                //if (interactiveType.ToUpper() == "LIST_REPLY")
                 {
-                    finalMessage = message.Interactive.List_Reply.Title;
+                    //finalMessage = message.Interactive.List_Reply.Title;
                 }
 
-                if (interactiveType.ToUpper() == "BUTTON_REPLY")
+                //if (interactiveType.ToUpper() == "BUTTON_REPLY")
                 {
-                    finalMessage = message.Interactive.Button_Reply.Title;
+                    //finalMessage = message.Interactive.Button_Reply.Title;
                 }
             }
 

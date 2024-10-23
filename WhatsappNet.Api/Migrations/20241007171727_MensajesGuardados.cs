@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace WhatsappNet.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class PruebaModelos : Migration
+    public partial class MensajesGuardados : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

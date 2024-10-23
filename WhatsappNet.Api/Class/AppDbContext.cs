@@ -37,6 +37,7 @@ namespace WhatsappNet.Api.Class
         protected override void OnModelCreating(ModelBuilder modelBuilder)
 
         {
+
             // Relación uno a muchos (ValueModel - ContactsModel)
             modelBuilder.Entity<ValueModel>()
                 .HasMany(v => v.Contacts)

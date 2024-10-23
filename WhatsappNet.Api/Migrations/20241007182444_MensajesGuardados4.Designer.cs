@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WhatsappNet.Api.Class;
@@ -11,9 +12,11 @@ using WhatsappNet.Api.Class;
 namespace WhatsappNet.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241007182444_MensajesGuardados4")]
+    partial class MensajesGuardados4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,11 +27,14 @@ namespace WhatsappNet.Api.Migrations
 
             modelBuilder.Entity("WhatsappNet.Api.Models.ContactsModel", b =>
                 {
-                    b.Property<int>("id")
+                    b.Property<int?>("id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int?>("id"));
+
+                    b.Property<int>("MessagesModelId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("StatusesModelId")
                         .HasColumnType("integer");
@@ -36,15 +42,14 @@ namespace WhatsappNet.Api.Migrations
                     b.Property<int>("ValueModelId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("profile_name")
-                        .HasColumnType("text");
+                    b.Property<int?>("profile_name")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("user_id")
                         .HasColumnType("integer");
 
-                    b.Property<string>("wa_id")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int?>("wa_id")
+                        .HasColumnType("integer");
 
                     b.HasKey("id");
 
@@ -287,7 +292,8 @@ namespace WhatsappNet.Api.Migrations
 
                     b.HasKey("id");
 
-                    b.HasIndex("ContactsModelId");
+                    b.HasIndex("ContactsModelId")
+                        .IsUnique();
 
                     b.HasIndex("StatusesModelId")
                         .IsUnique();
@@ -428,8 +434,8 @@ namespace WhatsappNet.Api.Migrations
             modelBuilder.Entity("WhatsappNet.Api.Models.MessageModel", b =>
                 {
                     b.HasOne("WhatsappNet.Api.Models.ContactsModel", "Contacts")
-                        .WithMany("Messages")
-                        .HasForeignKey("ContactsModelId")
+                        .WithOne("Message")
+                        .HasForeignKey("WhatsappNet.Api.Models.MessageModel", "ContactsModelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -465,7 +471,8 @@ namespace WhatsappNet.Api.Migrations
 
             modelBuilder.Entity("WhatsappNet.Api.Models.ContactsModel", b =>
                 {
-                    b.Navigation("Messages");
+                    b.Navigation("Message")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WhatsappNet.Api.Models.StatusesModel", b =>
