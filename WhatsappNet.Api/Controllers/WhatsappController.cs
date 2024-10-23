@@ -72,7 +72,7 @@ namespace WhatsappNet.Api.Controllers
         public async Task<ActionResult> Gemini([FromBodyAttribute] string text)
         {
             object objectMessage = _util.BodyGemini(text);
-            string responseGemini = await _geminiAPI.Execute(objectMessage); 
+            string responseGemini = await _geminiAPI.Execute(objectMessage);
             return Ok(responseGemini);
         }
 
@@ -90,7 +90,7 @@ namespace WhatsappNet.Api.Controllers
                 }
 
             };
-            
+
             var result = await _whatsappCloudSendMessage.Execute(data);
             return Ok($"Ok sample {result}");
         }
@@ -130,17 +130,17 @@ namespace WhatsappNet.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ReceivedMessage( [FromBody] WhatsAppCloudModel body ) 
+        public async Task<IActionResult> ReceivedMessage([FromBody] WhatsAppCloudModel body)
         {
-            try 
+            try
             {
                 Message Message = body.Entry[0].Changes[0].Value.Messages[0];
                 Contacts Contact = body.Entry[0].Changes[0].Value.Contacts[0];
-                
+
                 string waId = Contact.Wa_id;
                 string userName = Contact.Profile.Name;
                 string userNumber = Message.From;
-                string userText = GetUserText( Message );
+                string userText = GetUserText(Message);
                 string timestamp = Message.Timestamp;
                 object objectMessage = new { };
                 List<object> listObjectMessage = new List<object>();
@@ -149,8 +149,8 @@ namespace WhatsappNet.Api.Controllers
                 ContactsModel contactsModel = new ContactsModel();
                 contactsModel.wa_id = waId;
                 contactsModel.profile_name = userName;
-                
-                
+
+
 
                 // Verifica si el contacto ya existe en la base de datos
                 var existingContact = _context.Contacts.FirstOrDefault(c => c.wa_id == waId);
@@ -179,38 +179,34 @@ namespace WhatsappNet.Api.Controllers
                 if (userText.ToUpper() == "AGENDAR CITA")
                 {
                     // Crear objeto AgendarCita con el nombre del usuario
+                    Parents parents = new Parents();
+                    parents.Database_id = "10405bf806c0807e8d73d439b57cf01e";
 
-                    AgendarCita cita = new AgendarCita
-                    {
-                        Parent = new AgendarCita.Parents { Database_id = "10405bf806c0807e8d73d439b57cf01e" },
-                        Properties = new AgendarCita.Propertie
-                        {
-                            Nombre = new AgendarCita.Nombre
-                            {
-                                Title = new List<AgendarCita.Titles>
-                                {
-                                    new AgendarCita.Titles
-                                    {
-                                        Text = new AgendarCita.Texts
-                                        {
-                                            Content = userName // Usar el nombre del usuario
-                                        }
-                                    }
-                                }
-                            },
-                            Horario = new AgendarCita.Horarios
-                            {
-                                Date = new AgendarCita.Dates
-                                {
-                                    Start = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ") // Fecha de la cita (1 hora más)
-                                }
-                            }
-                        }
-                    };
+                    Nombre nombres = new Nombre();
+                    List<Titles> titles = new List<Titles>();
+                    Titles title = new Titles();
+                    Texts texts = new Texts();
+                    texts.Content = userName;
+                    title.Text = texts;
+                    titles.Add(title);
+                    nombres.Title = titles;
+
+                    Horarios horarios = new Horarios();
+                    Dates dates = new Dates();
+                    dates.Start = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    horarios.Date = dates;
+
+                    Propertie properties = new Propertie();
+                    properties.Nombre = nombres;
+                    properties.Horario = horarios;
+
+                    AgendarCita newMatch = new AgendarCita();
+                    newMatch.Parent = parents;
+                    newMatch.Properties = properties;
 
                     try
                     {
-                        await _notion.CrearCitaAsync(cita);
+                        await _notion.CrearCitaAsync(newMatch);
                     }
                     catch (Exception ex)
                     {
@@ -218,12 +214,14 @@ namespace WhatsappNet.Api.Controllers
                     }
                 }
 
-                if ( (userText.ToUpper() == "HOLA" || userText.Length <= 4) && !int.TryParse(userText, out int result)) {
+                if ((userText.ToUpper() == "HOLA" || userText.Length <= 4) && !int.TryParse(userText, out int result))
+                {
                     objectMessage = _util.TextMessage("Hola, Con que IA quieres hacer tu consulta:1-ChatGTP, 2-Gemini", userNumber);
                     createMessage = true;
                 }
 
-                if (userText.Length == 1 && int.TryParse(userText, out int number)) {
+                if (userText.Length == 1 && int.TryParse(userText, out int number))
+                {
                     DataStore.Datos["id"] = number;
                     objectMessage = _util.TextMessage($"´Qué deseas consultarle hoy a {FontIA[number]}?", userNumber);
                     createMessage = true;
@@ -233,11 +231,13 @@ namespace WhatsappNet.Api.Controllers
                 {
                     if (DataStore.Datos.TryGetValue("id", out int value))
                     {
-                        if (value == 1) {
+                        if (value == 1)
+                        {
                             string responseChatGPT = await _chatGPTService.Execute(userText);
                             objectMessage = _util.TextMessage(responseChatGPT, userNumber);
                         }
-                        if (value == 2) {
+                        if (value == 2)
+                        {
                             object objectMessageGemini = _util.BodyGemini(userText);
                             string responseGemini = await _geminiAPI.Execute(objectMessageGemini);
                             objectMessage = _util.TextMessage(responseGemini, userNumber);
@@ -248,7 +248,7 @@ namespace WhatsappNet.Api.Controllers
                         objectMessage = _util.TextMessage("No se ha definido ninguna IA", userNumber);
                     }
                 }
-                else if(!createMessage)
+                else if (!createMessage)
                 {
                     objectMessage = _util.TextMessage("Recuerda que la pregunta debe contener mas de 3 palabras", userNumber);
                 }
@@ -297,10 +297,10 @@ namespace WhatsappNet.Api.Controllers
                     await _whatsappCloudSendMessage.Execute(item);
                 }
 
-                
+
                 return Ok("EVENT_RECEIVED");
-            } 
-            catch (Exception ex) 
+            }
+            catch (Exception ex)
             {
                 return Ok("EVENT_RECEIVED");
             }
@@ -332,7 +332,7 @@ namespace WhatsappNet.Api.Controllers
             }
 
             return finalMessage;
-        } 
+        }
 
         private int CountWords(string text)
         {
