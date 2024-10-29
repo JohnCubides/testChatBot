@@ -115,7 +115,7 @@ namespace WhatsappNet.Api.Controllers
         public IActionResult Webhook([FromQuery(Name = "hub.mode")] string hub_mode, [FromQuery(Name = "hub.challenge")] string hub_challenge, [FromQuery(Name = "hub.verify_token")] string hub_verify_token)
         {
             // Tu Verify Token configurado
-            const string verifyToken = "EAF5OwUZABAzUBO3kuck5rJWhRjFOfAGIZAXdnAvs7uSeC2OmOaZC5rEj9SIZBLol5z0ZBN3QEt04hwxZCJOHVNHR93Hov0vRIwxZAH8NzhBbzHkq4f5whHpmReZCntFKZB2e048Qh7gxbsoNzrBnCcOwnWXZCEAL5xpqZCy35TqlDs6cB8sbTimPzruStBYhSjVeSEFepp6do8WfYUOZAX0o893bttbr3VXU8DipwXgsePkZD";
+            const string verifyToken = "EAF5OwUZABAzUBOzZA52XZBzhReST1CReDwJeOLup2ZBlZBBF8tOuOb02xcAaRjsjaovOTjMZBNLaSXeehMQWO3VAiktZCaF2tXJICTAKWiSKi6qdCMeXhwbUYvItlT0UZAM6TbukwJy7H28HvibtQSPxiSAQBtTwXPWIZBj5MZCTIm43tlA93XEvlJ2bHAOIIoIICay2zvuZAE79g0XZCMaxGkqZBgk0TqAZDZD";
 
             if (hub_mode == "subscribe" && hub_verify_token == verifyToken)
             {
@@ -206,7 +206,20 @@ namespace WhatsappNet.Api.Controllers
 
                     try
                     {
-                        await _notion.CrearCitaAsync(newMatch);
+                       HttpResponseMessage response = new HttpResponseMessage();
+                       await _notion.CrearCitaAsync(newMatch);
+                        if (response.IsSuccessStatusCode) 
+                        {
+                            // Si la cita se creó correctamente, envía confirmación al cliente
+                            string successMessageClient = $"Cita agendada con éxito para {userName} el {dates.Start}.";
+                            await _whatsappCloudSendMessage.Execute(_util.TextMessage(successMessageClient, userNumber));
+
+                            // Envía confirmación a la manicurista
+                            string manicuristNumber = "573219974374"; // Coloca aquí el número de la manicurista
+                            string successMessageManicurist = $"Nueva cita agendada para {userName} el {dates.Start}.";
+                            await _whatsappCloudSendMessage.Execute(_util.TextMessage(successMessageManicurist, manicuristNumber));
+                        }
+
                     }
                     catch (Exception ex)
                     {
